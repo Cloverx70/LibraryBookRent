@@ -1,0 +1,76 @@
+# Visual Studio files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build files
+bin/
+obj/
+out/
+*.exe
+*.dll
+*.pdb
+*.appx
+*.nupkg
+*.snupkg
+*.log
+*.cache
+*.vspscc
+*.vssscc
+
+# Rider / JetBrains
+.idea/
+*.sln.iml
+
+# .NET Core dependencies
+project.lock.json
+project.assets.json
+packages/
+.nuget/
+*.nuget.props
+*.nuget.targets
+
+# Configuration files
+appsettings*.json
+secrets.json
+
+# Entity Framework migrations
+Migrations/
+
+# Logs and Debugging
+*.log
+*.tlog
+*.cache
+*.pidb
+*.ilk
+*.aps
+*.ncb
+*.opendb
+*.sdf
+*.sqlite
+*.sqlite3
+
+# Test results
+TestResults/
+coverage/
+coverage.*.xml
+*.coverage
+*.coveragexml
+*.trx
+
+# Docker files
+.dockerignore
+docker-compose.override.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node.js dependencies (if using frontend inside project)
+node_modules/
+npm-debug.log
+yarn.lock
+pnpm-lock.yaml

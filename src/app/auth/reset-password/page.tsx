@@ -56,10 +56,10 @@ export default function ResetPasswordPage() {
             onSubmit={FormData.handleSubmit((data) => mutateReset(data))}
           >
             <div className=" w-full h-auto font-semibold flex flex-col gap-1 items-start justify-start ">
-              <h1 className="  text-xl 2xl:text-3xl xl:text-3xl lg:text-3xl md:text-xl">
-                Reset <span className=" text-customYellow"> Password</span>
+              <h1 className="  text-lg 2xl:text-2xl xl:text-2xl lg:text-2xl md:text-lg">
+                Reset <span className=" text-black/70"> Password</span>
               </h1>
-              <p className=" text-sm 2xl:text-lg xl:text-base lg:text-base md:text-sm">
+              <p className=" text-xs 2xl:text-base xl:text-sm lg:text-sm md:text-xs">
                 Please enter your Email below to reset your password..
               </p>
             </div>
@@ -78,7 +78,10 @@ export default function ResetPasswordPage() {
                 </FormItem>
               )}
             ></FormField>
-            <Button type="submit" className=" bg-customYellow w-full">
+            <Button
+              type="submit"
+              className=" text-white bg-black hover:bg-black/70 transition disabled:bg-gray-400 w-full h-8 text-xs"
+            >
               Reset now
             </Button>
           </form>

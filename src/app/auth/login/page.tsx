@@ -55,10 +55,10 @@ export default function LoginPage() {
 
   return (
     <section className="w-full h-screen flex items-center justify-center bg-gray-100">
-      <div className="h-[45%] w-full 2xl:w-[40%] xl:w-[40%] lg:w-[45%] md:w-[90%] sm:w-full sm:rounded-none p-6 flex-col gap-6 flex border rounded-lg shadow-lg bg-white overflow-hidden">
+      <div className="h-[45%] w-full 2xl:w-[30%] xl:w-[30%] lg:w-[35%] md:w-[80%] sm:w-full sm:rounded-none p-6 flex-col gap-6 flex border rounded-lg shadow-lg bg-white overflow-hidden">
         <div className="font-semibold">
-          <h1 className=" text-2xl sm:text-3xl md:text-3xl lg:text-3xl xl:text-3xl 2xl:text-3xl ">
-            Welcome to <span className="text-customYellow">Liu Library.</span>
+          <h1 className=" text-xl sm:text-2xl md:text-2xl lg:text-2xl xl:text-2xl 2xl:text-2xl ">
+            Welcome to <span className=" text-black/70">Liu Library.</span>
           </h1>
           <h4 className="text-base">Please log in to continue...</h4>
         </div>
@@ -83,18 +83,18 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-gray-500"
+                  className="absolute right-3 top-2 text-xs text-gray-500"
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
               )}
               {errors.password && (
-                <p className="text-red-500 text-sm">
+                <p className="text-red-500 text-xs">
                   {errors.password.message}
                 </p>
               )}
             </div>
-            <div className="w-full text-sm sm:text-base md:text-base lg:text-base xl:text-base 2xl:text-base flex justify-between">
+            <div className="w-full text-xs  flex justify-between">
               <Link href={"/auth/reset-password"}>forgot password?</Link>
               <div className="flex gap-1">
                 <p>new?</p>
@@ -111,7 +111,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-customYellow text-white py-2 rounded-md hover:bg-yellow-400 transition disabled:bg-gray-400"
+            className="w-full h-8 text-sm  bg-black text-white  rounded-md hover:bg-black/90 transition disabled:bg-gray-400"
           >
             {isSubmitting ? "Logging in..." : "Login"}
           </button>

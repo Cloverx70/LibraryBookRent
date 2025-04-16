@@ -97,12 +97,12 @@ export default function RegisterPage() {
 
   return (
     <section className="w-full h-screen bg-gray-100 flex items-center justify-center ">
-      <div className="w-full h-auto 2xl:w-[60%] xl:w-[60%] lg:w-[60%] md:w-[65%] sm:w-full mx-auto p-6 bg-white rounded-lg shadow-md flex flex-col justify-between">
+      <div className="w-full h-auto 2xl:w-[40%] xl:w-[40%] lg:w-[40%] md:w-[45%] sm:w-full mx-auto p-5 bg-white rounded-lg shadow-md flex flex-col justify-between">
         <div>
-          <h1 className="text-xl 2xl:text-3xl xl:text-3xl lg:text-3xl md:text-2xl sm:text-2xl font-bold">
-            Welcome to <span className="text-customYellow">Liu Library.</span>
+          <h1 className="text-lg 2xl:text-2xl xl:text-2xl lg:text-2xl md:text-xl sm:text-xl font-bold">
+            Welcome to <span className="text-black/70">Liu Library.</span>
           </h1>
-          <h4 className="text-sm 2xl:text-lg xl:text-lg lg:text-lg md:text-base sm:text-base font-bold mb-4">
+          <h4 className="text-xs 2xl:text-base xl:text-base lg:text-base md:text-sm sm:text-sm font-bold mb-4">
             Register now to continue
           </h4>
         </div>
@@ -303,13 +303,17 @@ export default function RegisterPage() {
                         defaultValue={field.value}
                       >
                         <FormControl>
-                          <SelectTrigger className="">
+                          <SelectTrigger className="h-7 text-xs">
                             <SelectValue placeholder="Select your major" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {majors.map((major) => (
-                            <SelectItem key={major} value={major}>
+                            <SelectItem
+                              key={major}
+                              value={major}
+                              className=" text-xs"
+                            >
                               {major}
                             </SelectItem>
                           ))}
@@ -323,7 +327,7 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
-            <div className="flex text-sm 2xl:text-base xl:text-base lg:text-base md:text-base sm:text-base gap-1">
+            <div className="flex text-xs 2xl:text-sm xl:text-xs lg:text-xs md:text-xs sm:text-xs gap-1">
               <p>already have an account?</p>
               <Link
                 className=" text-customDarkBlue hover:text-black"
@@ -335,7 +339,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={FormData.formState.isSubmitting}
-              className="w-full h-auto p-2 rounded-md text-white bg-customYellow hover:bg-yellow-400 transition disabled:bg-gray-400"
+              className="w-full h-8 text-sm rounded-md text-white bg-black hover:bg-black/70 transition disabled:bg-gray-400"
             >
               {FormData.formState.isSubmitting ? "Registering..." : "Register"}
             </button>

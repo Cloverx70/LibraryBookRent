@@ -22,8 +22,8 @@ const Input: React.FC<InputProps> = ({
         {...props}
         id={props.id || label}
         className={cn(
-          "peer w-full h-10 bg-transparent border-b border-gray-400 focus:border-black transition-all duration-300 outline-none px-1.5 placeholder-transparent",
-          className
+          className,
+          "peer w-full h-7 bg-transparent border-b border-gray-400 focus:border-black transition-all duration-300 outline-none px-1.5 placeholder-transparent text-xs"
         )}
         placeholder=" "
         onFocus={() => setIsFocused(true)}
@@ -33,14 +33,15 @@ const Input: React.FC<InputProps> = ({
       <label
         htmlFor={props.id || label}
         className={cn(
-          `absolute left-2 text-gray-400 text-sm transition-all 
+          `absolute left-2 text-gray-400 transition-all 
           ${
             isFocused
-              ? "-top-3 text-sm text-gray-800"
-              : "top-2 text-base text-gray-500"
+              ? "-top-3 text-xs text-gray-800"
+              : "top-2 text-sm text-gray-500"
           }
-          peer-placeholder-shown:top-2 peer-placeholder-shown:text-sm 2xl:peer-placeholder-shown:text-base xl:peer-placeholder-shown:text-base lg:peer-placeholder-shown:text-base md:peer-placeholder-shown:text-base sm:peer-placeholder-shown:text-base  peer-placeholder-shown:text-gray-500
-          peer-focus:-top-3 peer-focus:text-sm peer-focus:text-gray-800`,
+          peer-placeholder-shown:top-2 peer-placeholder-shown:text-xs
+          peer-placeholder-shown:text-gray-500
+          peer-focus:-top-3 peer-focus:text-xs peer-focus:text-gray-800`,
           labelClassName
         )}
       >

@@ -17,7 +17,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${roboto.className} ${montserrat.className} antialiased`}>
+    <div
+      className={`${roboto.className} ${montserrat.className} antialiased bg-gray-100`}
+    >
       {children}
     </div>
   );

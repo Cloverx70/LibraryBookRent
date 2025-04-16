@@ -20,28 +20,15 @@ interface statusData {
 
 interface Response {
   message: string;
-  data: statusData;
+  user: statusData;
 }
 
 interface UserContextType {
-  statusData: statusData;
+  statusData?: statusData;
   isPending: boolean;
 }
 
-const defaultStatusData: statusData = {
-  id: "",
-  firstName: "Guest",
-  lastName: "",
-  email: "",
-  phoneNumber: null,
-  username: "guest",
-  studentMajor: null,
-  role: "client",
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-};
-
-export async function getStatus(): Promise<statusData> {
+export async function getStatus(): Promise<statusData | undefined> {
   try {
     const res: AxiosResponse<Response> = await axiosInstance.get(
       "auth/status",
@@ -50,21 +37,21 @@ export async function getStatus(): Promise<statusData> {
       }
     );
 
-    if (res.status !== 200 || !res.data.data) {
+    if (res.status !== 200 || !res.data.user) {
       throw new Error(
         res.data.message || "Something went wrong while authenticating"
       );
     }
 
-    return res.data.data;
+    return res.data.user;
   } catch (error) {
     handleError(error);
-    return defaultStatusData;
+    return undefined;
   }
 }
 
 const UserContext = createContext<UserContextType>({
-  statusData: defaultStatusData,
+  statusData: undefined,
   isPending: true,
 });
 
@@ -73,13 +60,15 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const { data: statusData = defaultStatusData, isLoading: isPending } =
-    useQuery<statusData>({
-      queryKey: ["STATUS"],
-      queryFn: getStatus,
-      staleTime: 60000,
-      retry: 0,
-    });
+  const { data: statusData, isLoading: isPending } = useQuery<
+    statusData | undefined
+  >({
+    queryKey: ["STATUS"],
+    queryFn: getStatus,
+    staleTime: 60000,
+    retry: 0,
+    refetchOnWindowFocus: true,
+  });
 
   return (
     <UserContext.Provider value={{ statusData, isPending }}>

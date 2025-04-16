@@ -31,9 +31,13 @@ public partial class Book
 
     public DateTime? UpdatedAt { get; set; }
 
-    public virtual User? BorrowedByNavigation { get; set; }
+    public string? BookPictureUrl { get; set; }
 
-    public virtual Category? Category { get; set; }
+    public string? Genre { get; set; }
 
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public string? Description { get; set; }
+
+    public virtual ICollection<CategoryBook> CategoryBooks { get; set; } = new List<CategoryBook>();
+
+    public virtual Review? Review { get; set; }
 }

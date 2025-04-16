@@ -19,6 +19,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<Category> Categories { get; set; }
 
+    public virtual DbSet<CategoryBook> CategoryBooks { get; set; }
+
     public virtual DbSet<Review> Reviews { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -42,7 +44,7 @@ public partial class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Isbn, "isbn").IsUnique();
 
             entity.Property(e => e.Id)
-                .HasMaxLength(24)
+                .HasMaxLength(36)
                 .HasColumnName("id");
             entity.Property(e => e.Author)
                 .HasMaxLength(150)
@@ -50,6 +52,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.AvailableCopies)
                 .HasColumnType("int(11)")
                 .HasColumnName("available_copies");
+            entity.Property(e => e.BookPictureUrl)
+                .HasMaxLength(200)
+                .HasDefaultValueSql("'NULL'");
             entity.Property(e => e.BorrowedAt)
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnType("timestamp")
@@ -59,13 +64,21 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnName("borrowed_by");
             entity.Property(e => e.CategoryId)
-                .HasMaxLength(24)
+                .HasMaxLength(36)
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnName("category_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("'current_timestamp()'")
                 .HasColumnType("timestamp")
                 .HasColumnName("created_at");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnName("description");
+            entity.Property(e => e.Genre)
+                .HasMaxLength(200)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnName("genre");
             entity.Property(e => e.Isbn)
                 .HasMaxLength(20)
                 .HasColumnName("isbn");
@@ -88,16 +101,6 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("'current_timestamp()'")
                 .HasColumnType("timestamp")
                 .HasColumnName("updated_at");
-
-            entity.HasOne(d => d.BorrowedByNavigation).WithMany(p => p.Books)
-                .HasForeignKey(d => d.BorrowedBy)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("books_ibfk_2");
-
-            entity.HasOne(d => d.Category).WithMany(p => p.Books)
-                .HasForeignKey(d => d.CategoryId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("books_ibfk_1");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -109,7 +112,7 @@ public partial class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Name, "name").IsUnique();
 
             entity.Property(e => e.Id)
-                .HasMaxLength(24)
+                .HasMaxLength(36)
                 .HasColumnName("id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("'current_timestamp()'")
@@ -124,6 +127,35 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnName("name");
         });
 
+        modelBuilder.Entity<CategoryBook>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.ToTable("category_books");
+
+            entity.HasIndex(e => e.BookId, "book_id");
+
+            entity.HasIndex(e => new { e.CategoryId, e.BookId }, "category_id").IsUnique();
+
+            entity.Property(e => e.Id)
+                .HasMaxLength(36)
+                .HasColumnName("id");
+            entity.Property(e => e.BookId)
+                .HasMaxLength(36)
+                .HasColumnName("book_id");
+            entity.Property(e => e.CategoryId)
+                .HasMaxLength(36)
+                .HasColumnName("category_id");
+
+            entity.HasOne(d => d.Book).WithMany(p => p.CategoryBooks)
+                .HasForeignKey(d => d.BookId)
+                .HasConstraintName("category_books_ibfk_2");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.CategoryBooks)
+                .HasForeignKey(d => d.CategoryId)
+                .HasConstraintName("fk_category_id");
+        });
+
         modelBuilder.Entity<Review>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PRIMARY");
@@ -132,7 +164,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => e.BookId, "book_id");
 
-            entity.HasIndex(e => e.UserId, "user_id");
+            entity.HasIndex(e => e.UserId, "review_ibfk_1");
 
             entity.Property(e => e.Id)
                 .HasMaxLength(24)
@@ -160,12 +192,14 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(24)
                 .HasColumnName("user_id");
 
-            entity.HasOne(d => d.Book).WithMany(p => p.Reviews)
-                .HasForeignKey(d => d.BookId)
+            entity.HasOne(d => d.IdNavigation).WithOne(p => p.Review)
+                .HasForeignKey<Review>(d => d.Id)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("review_ibfk_2");
 
             entity.HasOne(d => d.User).WithMany(p => p.Reviews)
                 .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("review_ibfk_1");
         });
 
@@ -181,9 +215,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.HasIndex(e => e.Username, "username").IsUnique();
 
-            entity.Property(e => e.Id)
-                .HasMaxLength(24)
-                .HasColumnName("id");
+            entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Address)
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnType("text")

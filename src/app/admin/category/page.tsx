@@ -11,15 +11,16 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight2 } from "iconsax-react";
 import { GetAllCategories } from "./action";
+import { useRouter } from "next/navigation";
 
 export default function AdminCategoryPage() {
+  const router = useRouter();
+
   const {
     data: CategoriesData,
     isLoading,
     isPending,
   } = useQuery({ queryKey: ["CATEGORIES"], queryFn: () => GetAllCategories() });
-
-  console.log(CategoriesData);
 
   if (isLoading || isPending) return "";
 
@@ -49,25 +50,37 @@ export default function AdminCategoryPage() {
       </div>
       <div></div>
 
+      <div className=" w-full">
+        <p className=" text-white text-xl font-semibold">
+          {CategoriesData ? CategoriesData?.length : 0} Categories found :
+        </p>
+      </div>
       <div className=" w-full grid grid-flow-col gap-5 justify-start justify-items-center">
-        {CategoriesData && CategoriesData.length > 0
-          ? CategoriesData.map((category, index) => {
-              return (
-                <div
-                  key={category.id || index}
-                  className=" w-44 h-40 p-4 cursor-pointer bg-neutral-800 flex flex-col items-center justify-center gap-2 text-white "
-                >
-                  <div className=" w-full flex flex-col items-center justify-center ">
-                    <h1 className=" font-bold ">{category.name}</h1>
-                    <p className=" line-clamp-1 text-sm">
-                      {category.description}
-                    </p>
-                  </div>
-                  <p className=" text-xs">12 Books</p>
+        {CategoriesData && CategoriesData.length > 0 ? (
+          CategoriesData.map((category, index) => {
+            return (
+              <div
+                key={category.id || index}
+                onClick={() => router.push(`/admin/category/${category.id}`)}
+                className=" w-44 h-40 p-4 cursor-pointer bg-neutral-800 flex flex-col items-center justify-center gap-2 text-white "
+              >
+                <div className=" w-full flex flex-col items-center justify-center ">
+                  <h1 className=" font-bold ">{category.name}</h1>
+                  <p className=" line-clamp-2 text-center text-xs">
+                    {category.description}
+                  </p>
                 </div>
-              );
-            })
-          : ""}
+                <p className=" text-xs">
+                  {category.books.length >= 0 && category.books.length} Books
+                </p>
+              </div>
+            );
+          })
+        ) : (
+          <div className="w-full flex items-center justify-center text-white">
+            <p>No Books Are Available...</p>
+          </div>
+        )}
       </div>
     </section>
   );

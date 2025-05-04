@@ -1,4 +1,5 @@
 "use client";
+
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -18,12 +19,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight2 } from "iconsax-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { GetCategoryById } from "../action";
-import { useParams } from "next/navigation";
+import { DeleteCategory, GetCategoryById, UpdateCategory } from "../action";
+import { useParams, useRouter } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -35,41 +36,39 @@ import {
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { book } from "@/app/components/bookCard";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
+import toaster from "@/app/components/toaster";
+import { Loader2 } from "lucide-react";
 
 const CategorySchema = z.object({
-  name: z.string().nonempty(),
-  description: z.string().nonempty(),
-  books: z
-    .array(
-      z.object({
-        id: z.string(),
-        bookPictureUrl: z.string(),
-        title: z.string(),
-        author: z.string(),
-        isbn: z.string(),
-        description: z.string(),
-        categoryId: z.string(),
-        totalCopies: z.number(),
-        availableCopies: z.number(),
-        borrowedBy: z.coerce.date(),
-        borrowedAt: z.coerce.date(),
-        returnDueDate: z.coerce.date(),
-        returnedAt: z.coerce.date(),
-        createdAt: z.coerce.date(),
-        updatedAt: z.coerce.date(),
-        genre: z.string(),
-      })
-    )
+  Name: z
+    .string()
+    .trim()
+    .nonempty("Title field cannot be empty")
+    .min(1, "Name is required")
+    .max(100, "Name must be at most 100 characters"),
+  Description: z
+    .string()
+    .trim()
+    .max(500, { message: "Description should be at most 500 characters long" })
     .optional(),
+  BookIds: z.array(z.string()).optional(),
 });
 
 export default function ViewAndEditCategoryPage() {
+  const router = useRouter();
   const { cid } = useParams();
   const CategoryId: string = Array.isArray(cid) ? cid[0] : cid ?? "";
+
+  const queryClient = useQueryClient();
+
+  const [open, setOpen] = useState<boolean>(false);
 
   const { data: CategoryData } = useQuery({
     queryKey: ["CATEGORY"],
     queryFn: () => GetCategoryById(CategoryId),
+    refetchOnWindowFocus: false,
   });
 
   type CategoryFormInputs = z.infer<typeof CategorySchema>;
@@ -77,31 +76,77 @@ export default function ViewAndEditCategoryPage() {
   const CategoryForm = useForm<CategoryFormInputs>({
     resolver: zodResolver(CategorySchema),
     defaultValues: {
-      name: "",
-      description: "",
-      books: [],
+      Name: "",
+      Description: "",
+      BookIds: [],
     },
   });
 
-  const [categoryBooksKeep, setcategoryBooksKeep] = useState<book[]>([]);
+  const selectedBooks = CategoryForm.watch("BookIds");
+
+  const toggleBookId = (book: book) => {
+    if (book.availableCopies <= 0) {
+      toaster("Book Unavailable", "This book is not available for selection");
+      return;
+    }
+
+    const current = CategoryForm.getValues("BookIds") || [];
+    const updated = current.includes(book.id)
+      ? current.filter((bookId) => bookId !== book.id)
+      : [...current, book.id];
+
+    CategoryForm.setValue("BookIds", updated, { shouldValidate: true });
+  };
+
+  const { mutate: updateCategoryMutation, isPending } = useMutation({
+    mutationFn: async (data: CategoryFormInputs) =>
+      await UpdateCategory(CategoryId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["CATEGORIES"],
+      });
+
+      toaster("Success", "Category updated successfully");
+      CategoryForm.reset();
+      router.push("/admin/category");
+    },
+    onError: (error) => {
+      toaster("Error creating book", error.message || "Something went wrong");
+    },
+  });
+
+  const { mutate: deleteCategoryMutation, isPending: isDeleting } = useMutation(
+    {
+      mutationFn: async () => await DeleteCategory(CategoryId),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["CATEGORIES"],
+        });
+
+        toaster("Success", "Category deleted successfully");
+        router.push("/admin/category");
+      },
+      onError: (error) => {
+        toaster(
+          "Error updating category",
+          error.message || "Something went wrong"
+        );
+      },
+      onSettled: () => {
+        setOpen(false);
+      },
+    }
+  );
 
   useEffect(() => {
     if (CategoryData) {
       CategoryForm.reset({
-        name: CategoryData.name,
-        description: CategoryData.description,
-        books: CategoryData.books ?? [],
+        Name: CategoryData.name,
+        Description: CategoryData.description || "",
+        BookIds: CategoryData.books?.map((book) => book.id) ?? [],
       });
-
-      setcategoryBooksKeep(CategoryData.books);
     }
   }, [CategoryData, CategoryForm]);
-
-  const handleOnRemoveCategoryBook = (id: string) => {
-    if (categoryBooksKeep.length > 0) {
-      setcategoryBooksKeep(categoryBooksKeep.filter((book) => book.id !== id));
-    }
-  };
 
   return (
     <section className="w-full h-screen p-4 flex flex-col gap-4 overflow-y-auto">
@@ -130,11 +175,14 @@ export default function ViewAndEditCategoryPage() {
           Update Category
         </p>
         <div>
-          <Dialog>
+          <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger className=" w-auto px-5 h-7 text-xs  flex items-center justify-center  bg-red-900 hover:bg-red-950  rounded-sm transition-colors duration-100 ease-linear font-normal">
               Delete Category
             </DialogTrigger>
-            <DialogContent className=" bg-neutral-900 text-white w-1/2 border-none px-10">
+            <DialogContent
+              aria-describedby={undefined}
+              className=" bg-neutral-900 text-white w-1/2 border-none px-10"
+            >
               <DialogHeader>
                 <DialogTitle className=" text-2xl">
                   Are you absolutely sure?
@@ -148,9 +196,15 @@ export default function ViewAndEditCategoryPage() {
                 <DialogClose asChild>
                   <Button
                     type="button"
-                    className=" w-44 h-8 bg-neutral-800 hover:bg-neutral-700 "
+                    disabled={isDeleting}
+                    onClick={() => deleteCategoryMutation()}
+                    className="w-44 h-8 bg-neutral-800 hover:bg-neutral-700 "
                   >
-                    Delete
+                    {isDeleting ? (
+                      <Loader2 className="animate-spin" />
+                    ) : (
+                      "Delete"
+                    )}
                   </Button>
                 </DialogClose>
               </DialogFooter>
@@ -162,78 +216,122 @@ export default function ViewAndEditCategoryPage() {
       <div className=" w-full flex flex-col items-center justify-center">
         <Form {...CategoryForm}>
           <form
-            className="w-full flex flex-col items-center justify-center gap-3"
-            onSubmit={CategoryForm.handleSubmit(() => {})}
+            onSubmit={CategoryForm.handleSubmit((data) =>
+              updateCategoryMutation(data)
+            )}
+            className="space-y-4 w-full"
           >
-            <FormField
-              control={CategoryForm.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="w-full ">
-                  <FormLabel className="text-xs text-white">Name</FormLabel>
-                  <FormControl>
-                    <input
-                      className="w-full h-8 px-2 text-sm outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={CategoryForm.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel className="text-xs text-white">
-                    Description
-                  </FormLabel>
-                  <FormControl>
-                    <textarea
-                      rows={7}
-                      className="w-full h-auto p-2 text-sm outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className=" w-full flex flex-col gap-2">
-              <label className=" text-white text-xs">Books</label>
-              <div className="w-full flex overflow-x-auto h-auto p-3 text-sm outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400">
-                {CategoryData?.books &&
-                  CategoryData.books.length > 0 &&
-                  CategoryData.books.map((book) => (
-                    <div
-                      key={book.id}
-                      className="w-48 h-[260px] flex flex-col  bg-neutral-700 items-center justify-center pt-2 rounded-lg"
-                    >
-                      <div className="relative w-[90%] h-[90%] rounded-lg">
-                        <Image
-                          src={book.bookPictureUrl}
-                          alt="pic"
-                          className="object-cover object-center rounded-lg"
-                          fill
+            <div className="w-full flex flex-col lg:flex-row justify-center items-start gap-4">
+              <div className="w-full flex flex-col gap-y-4">
+                <FormField
+                  control={CategoryForm.control}
+                  name="Name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Name</FormLabel>
+                      <FormControl>
+                        <input
+                          className="w-full text-sm h-12 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
+                          {...field}
                         />
-                      </div>
-                      <div className="w-[90%] h-[30%] flex flex-col items-center justify-center">
-                        <h1 className=" font-semibold text-xs truncate text-center w-[80%]">
-                          {book.title}
-                        </h1>
-                        <h3 className=" text-xs">
-                          {book.availableCopies > 0
-                            ? "Available"
-                            : "UnAvailable"}
-                        </h3>
-                      </div>
-                    </div>
-                  ))}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={CategoryForm.control}
+                  name="Description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs">Description</FormLabel>
+                      <FormControl>
+                        <textarea
+                          rows={7}
+                          className="w-full resize-none text-sm p-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="w-px h-[292px] border border-dashed border-gray-600 hidden lg:block" />
+              <div className="w-full">
+                {CategoryData?.books && CategoryData.books.length > 0 ? (
+                  <FormField
+                    control={CategoryForm.control}
+                    name="BookIds"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel className="text-xs">Books</FormLabel>
+                        <FormControl>
+                          <ScrollArea className="w-full h-64 p-2 pr-3 rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 border border-dashed border-gray-500 hover:border-gray-400">
+                            <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 text-sm text-white">
+                              {CategoryData.books.map((book: book) => {
+                                const isSelected = selectedBooks?.includes(
+                                  book.id
+                                );
+
+                                return (
+                                  <div
+                                    key={book.id}
+                                    onClick={() => toggleBookId(book)}
+                                    className={cn(
+                                      "w-full h-[235px] p-1 flex flex-col items-center justify-center pt-2 rounded-lg transition-all cursor-pointer",
+                                      {
+                                        "bg-green-700 hover:bg-green-600":
+                                          isSelected,
+                                        "bg-neutral-700 hover:bg-neutral-600":
+                                          !isSelected,
+                                      }
+                                    )}
+                                  >
+                                    <div className="relative w-full h-full rounded-lg">
+                                      <Image
+                                        src={book.bookPictureUrl || ""}
+                                        alt="pic"
+                                        className="object-cover object-center rounded-lg"
+                                        fill
+                                      />
+                                    </div>
+                                    <div className="flex flex-col items-center justify-center">
+                                      <h1 className="font-semibold text-xs truncate text-center w-[80%]">
+                                        {book.title}
+                                      </h1>
+                                      <h3 className="text-xs">
+                                        {book.availableCopies > 0
+                                          ? "Available"
+                                          : "UnAvailable"}
+                                      </h3>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </ScrollArea>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <div className="w-full py-4 lg:py-0 lg:h-[200px] flex items-center justify-center">
+                    <p className="text-sm text-gray-400">
+                      No Books available at this moment
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-32 h-8 text-xs bg-neutral-800 hover:bg-neutral-700 "
+            >
+              {isPending ? <Loader2 className="animate-spin" /> : "Update"}
+            </Button>
           </form>
         </Form>
       </div>

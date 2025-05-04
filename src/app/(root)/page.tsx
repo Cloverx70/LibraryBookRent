@@ -1,7 +1,7 @@
 "use client";
 import BookCard, { book } from "../components/bookCard";
 import { useQuery } from "@tanstack/react-query";
-import { getAllBooks } from "../admin/book/action";
+import { getAllBooks } from "../adminbak/book/action";
 import BookSkeleton from "../components/bookSkeleton";
 import { motion } from "framer-motion";
 

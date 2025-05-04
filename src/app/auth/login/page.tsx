@@ -8,7 +8,7 @@ import React, { useState } from "react";
 import { login } from "../actions";
 import { useRouter } from "next/navigation";
 import toaster from "@/app/components/toaster";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 
 const loginSchema = z.object({
@@ -20,7 +20,7 @@ type LoginFormInputs = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-
+  const client = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -47,6 +47,7 @@ export default function LoginPage() {
     },
     onSuccess: () => {
       router.push("/");
+      client.invalidateQueries({ queryKey: ["STATUS"] });
       toaster("Successful Login", "Welcome back");
     },
   });

@@ -44,10 +44,7 @@ export default function AdminCategoryPage() {
         <h1>Categories</h1>
       </div>
       <div className="w-full flex items-center justify-end">
-        <Button
-          onClick={() => router.push("/admin/category/add")}
-          className="w-40 py-2 h-8 hover:bg-black/15 transition-all ease-linear duration-100 font-semibold text-xs bg-neutral-800"
-        >
+        <Button className="w-40 py-2 h-8 hover:bg-black/15 transition-all ease-linear duration-100 font-semibold text-xs bg-neutral-800">
           Add Category
         </Button>
       </div>
@@ -81,7 +78,7 @@ export default function AdminCategoryPage() {
           })
         ) : (
           <div className="w-full flex items-center justify-center text-white">
-            <p>No Books Are Available...</p>
+            <p>No Categories Are Available...</p>
           </div>
         )}
       </div>

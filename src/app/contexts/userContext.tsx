@@ -4,6 +4,7 @@ import { AxiosResponse } from "axios";
 import React, { createContext, useContext, ReactNode } from "react";
 import { axiosInstance } from "../lib/axios.instance";
 import { handleError } from "../utils/methods.utils";
+import { book } from "../components/bookCard";
 
 interface statusData {
   id: string;
@@ -14,8 +15,12 @@ interface statusData {
   username: string;
   studentMajor: string | null;
   role: "client" | "admin";
+  address: string;
   createdAt: string;
   updatedAt: string;
+  pendingRentals: book[];
+  approvedRentals: book[];
+  declinedRentals: book[];
 }
 
 interface Response {

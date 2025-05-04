@@ -27,6 +27,23 @@ export async function login(email: string, password: string) {
   }
 }
 
+export async function logout() {
+  try {
+    const res: AxiosResponse<Response> = await axiosInstance.post(
+      "auth/logout",
+      {},
+      { withCredentials: true }
+    );
+
+    if (res.status !== 200)
+      throw new Error(
+        res.data.message || "Something went wrong while logging out"
+      );
+  } catch (error) {
+    handleError(error);
+  }
+}
+
 export async function register(
   FirstName: string,
   LastName: string,

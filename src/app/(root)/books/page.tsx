@@ -1,5 +1,5 @@
 "use client";
-import { getAllBooks } from "@/app/admin/book/action";
+import { getAllBooks } from "@/app/adminbak/book/action";
 import BookCard, { book } from "@/app/components/bookCard";
 import BookSkeleton from "@/app/components/bookSkeleton";
 import {
@@ -59,23 +59,23 @@ export default function AllBooksPage() {
           <div className="relative">
             <SearchNormal1
               className="absolute top-[7px] left-4"
-              size="25"
+              size="20"
               color="#262626"
             />
 
             <button className="text-sm absolute right-4 top-[8px]">
-              <FilterSearch size="25" color="#262626" />
+              <FilterSearch size="20" color="#262626" />
             </button>
 
             <input
               type="text"
               placeholder="Search for a book"
-              className="h-[40px] w-[400px] bg-transparent border border-neutral-800 focus:border-neutral-900 rounded-3xl pl-16 text-sm font-normal outline-none"
+              className="h-[35px] w-[250px] md:w-[400px] lg:w-[400px] xl:w-[400px] 2xl:w-[400px] bg-transparent placeholder:text-sm border border-neutral-800 focus:border-neutral-900 rounded-3xl pl-16 text-sm font-normal outline-none"
             />
           </div>
 
           <Select>
-            <SelectTrigger className=" w-32 h-[40px] text-white placeholder:text-white border-neutral-800 outline-none rounded-3xl">
+            <SelectTrigger className=" w-32 h-[35px] placeholder:text-sm text-white placeholder:text-white border-neutral-800 outline-none rounded-3xl">
               <SelectValue placeholder="Sort" />
             </SelectTrigger>
             <SelectContent>
@@ -90,7 +90,7 @@ export default function AllBooksPage() {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ ease: "linear", duration: 0.3 }}
-          className="w-full grid grid-cols-6 gap-5 justify-items-center "
+          className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 justify-start gap-5 justify-items-center "
         >
           {isLoading && isPending
             ? Array.from({ length: 12 }).map((_, index) => (

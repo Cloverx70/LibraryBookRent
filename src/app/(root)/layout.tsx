@@ -15,28 +15,45 @@ import { useUserContext } from "../contexts/userContext";
 import { BsTwitterX } from "react-icons/bs";
 import { FaFacebookSquare } from "react-icons/fa";
 import { RiInstagramFill } from "react-icons/ri";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { logout } from "../auth/actions";
+import { useQueryClient } from "@tanstack/react-query";
 
 const MenuOptions = () => {
   const { statusData, isPending } = useUserContext();
+
+  const router = useRouter();
+
+  const client = useQueryClient();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/auth/login");
+    client.invalidateQueries({ queryKey: ["STATUS"] });
+  };
+
   return (
     <section className=" w-full h-full flex flex-col justify-between">
-      <Button className="w-full bg-transparent border-b border-black text-black rounded-none">
-        Login
-      </Button>
-
       <Link href={"/admin/book"}>
         {!isPending && statusData?.role === "admin" && (
-          <Button className=" w-full bg-transparent border-b text-black rounded-none">
+          <Button className=" w-full bg-transparent shadow-none text-black hover:bg-neutral-300 rounded-none">
             Admin Dashboard
           </Button>
         )}
       </Link>
 
       <div className=" flex md:hidden lg:hidden xl:hidden 2xl:hidden flex-col ">
+        <Link href={"/admin/book"}>
+          {
+            <Button className=" w-full bg-transparent shadow-none  text-black  hover:bg-neutral-300 rounded-none">
+              Categories
+            </Button>
+          }
+        </Link>
+
         <Link href={"/books"}>
           {
-            <Button className=" w-full bg-transparent border-b text-black rounded-none">
+            <Button className=" w-full bg-transparent shadow-none  text-black  hover:bg-neutral-300 rounded-none">
               Books
             </Button>
           }
@@ -44,39 +61,47 @@ const MenuOptions = () => {
 
         <Link href={"/admin/book"}>
           {
-            <Button className=" w-full bg-transparent border-b text-black rounded-none">
-              About
-            </Button>
-          }
-        </Link>
-
-        <Link href={"/admin/book"}>
-          {
-            <Button className=" w-full bg-transparent border-b text-black rounded-none">
-              Categories
-            </Button>
-          }
-        </Link>
-
-        <Link href={"/admin/book"}>
-          {
-            <Button className=" w-full bg-transparent border-b text-black rounded-none">
+            <Button className=" w-full bg-transparent shadow-none  text-black  hover:bg-neutral-300 rounded-none">
               Support
             </Button>
           }
         </Link>
-      </div>
 
-      <Button className=" w-full bg-transparent border-b text-black rounded-none">
-        Logout
-      </Button>
+        <Link href={"/admin/book"}>
+          {
+            <Button className=" w-full bg-transparent shadow-none  text-black  hover:bg-neutral-300 rounded-none">
+              About
+            </Button>
+          }
+        </Link>
+      </div>
+      {!statusData && !isPending ? (
+        <Button
+          onClick={() => router.push("/auth/login")}
+          className="w-full bg-transparent shadow-none text-black  hover:bg-neutral-300 rounded-none"
+        >
+          Login
+        </Button>
+      ) : (
+        <Button
+          onClick={handleLogout}
+          className=" w-full bg-transparent shadow-none text-black  hover:bg-neutral-300 rounded-none"
+        >
+          Logout
+        </Button>
+      )}
     </section>
   );
 };
 
 const Navbar = () => {
   const navRef = useRef<HTMLDivElement>(null);
+
+  const { statusData, isPending } = useUserContext();
+
   const path = usePathname();
+  const router = useRouter();
+
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
 
   useEffect(() => {
@@ -131,18 +156,22 @@ const Navbar = () => {
           <SheetTrigger>
             <HambergerMenu size="25" color="#FFFFFF" />
           </SheetTrigger>
-          <SheetContent className="w-[200px] sm:w-[440px]">
-            <SheetHeader>
-              <SheetTitle>Are you absolutely sure?</SheetTitle>
+          <SheetContent className="w-[200px] sm:w-[240px] p-0 m-0  border-none">
+            <SheetHeader className=" w-full flex flex-col gap-5 ">
+              <SheetTitle className="p-3 text">Menu</SheetTitle>
               <MenuOptions />
             </SheetHeader>
           </SheetContent>
         </Sheet>
 
-        <div className="w-8 h-8 hidden md:flex lg:flex xl:flex 2xl:flex rounded-full overflow-hidden items-center justify-center">
-          <ProfileCircle size="30" color="#FFFFFF" variant="Bold" />
-          {/*<ProfileCircle size="35" color="#FF8A65" /> */}
-        </div>
+        {statusData && !isPending && (
+          <div
+            onClick={() => router.push(`/profile/${statusData?.id}`)}
+            className="w-8 h-8 cursor-pointer hidden md:flex lg:flex xl:flex 2xl:flex rounded-full overflow-hidden items-center justify-center"
+          >
+            <ProfileCircle size="30" color="#FFFFFF" variant="Bold" />
+          </div>
+        )}
       </div>
     </section>
   );

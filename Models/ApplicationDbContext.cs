@@ -25,6 +25,8 @@ public partial class ApplicationDbContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserBookedBook> UserBookedBooks { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseMySQL("Server=localhost;Database=BookShop;User=root;Password=Kimokamaru@121;");
@@ -82,6 +84,9 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Isbn)
                 .HasMaxLength(20)
                 .HasColumnName("isbn");
+            entity.Property(e => e.Rating)
+                .HasColumnType("int(11)")
+                .HasColumnName("rating");
             entity.Property(e => e.ReturnDueDate)
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnType("date")
@@ -162,15 +167,16 @@ public partial class ApplicationDbContext : DbContext
 
             entity.ToTable("review");
 
-            entity.HasIndex(e => e.BookId, "book_id");
-
             entity.HasIndex(e => e.UserId, "review_ibfk_1");
 
+            entity.HasIndex(e => e.BookId, "review_ibfk_2");
+
             entity.Property(e => e.Id)
-                .HasMaxLength(24)
+                .HasMaxLength(36)
                 .HasColumnName("id");
             entity.Property(e => e.BookId)
-                .HasMaxLength(24)
+                .HasMaxLength(36)
+                .HasDefaultValueSql("'NULL'")
                 .HasColumnName("book_id");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("'current_timestamp()'")
@@ -189,11 +195,12 @@ public partial class ApplicationDbContext : DbContext
                 .HasColumnType("timestamp")
                 .HasColumnName("updated_at");
             entity.Property(e => e.UserId)
-                .HasMaxLength(24)
+                .HasMaxLength(36)
+                .HasDefaultValueSql("'NULL'")
                 .HasColumnName("user_id");
 
-            entity.HasOne(d => d.IdNavigation).WithOne(p => p.Review)
-                .HasForeignKey<Review>(d => d.Id)
+            entity.HasOne(d => d.Book).WithMany(p => p.Reviews)
+                .HasForeignKey(d => d.BookId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .HasConstraintName("review_ibfk_2");
 
@@ -220,6 +227,10 @@ public partial class ApplicationDbContext : DbContext
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnType("text")
                 .HasColumnName("address");
+            entity.Property(e => e.BookedBooks)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnType("int(11)")
+                .HasColumnName("booked_books");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("'current_timestamp()'")
                 .HasColumnType("timestamp")
@@ -267,6 +278,45 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(50)
                 .HasColumnName("username");
+        });
+
+        modelBuilder.Entity<UserBookedBook>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PRIMARY");
+
+            entity.HasIndex(e => e.BookId, "bookId");
+
+            entity.HasIndex(e => e.UserId, "userId");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.BookId).HasColumnName("bookId");
+            entity.Property(e => e.BorrowedAt)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnType("datetime")
+                .HasColumnName("borrowedAt");
+            entity.Property(e => e.ReturnDueDate)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnType("datetime")
+                .HasColumnName("returnDueDate");
+            entity.Property(e => e.ReturnedAt)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnType("datetime")
+                .HasColumnName("returnedAt");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'NULL'")
+                .HasColumnType("enum('pending','approved','declined')")
+                .HasColumnName("status");
+            entity.Property(e => e.UserId).HasColumnName("userId");
+
+            entity.HasOne(d => d.Book).WithMany(p => p.UserBookedBooks)
+                .HasForeignKey(d => d.BookId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("UserBookedBooks_ibfk_2");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserBookedBooks)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("UserBookedBooks_ibfk_1");
         });
 
         OnModelCreatingPartial(modelBuilder);

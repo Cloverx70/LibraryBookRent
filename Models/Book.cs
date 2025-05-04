@@ -37,7 +37,11 @@ public partial class Book
 
     public string? Description { get; set; }
 
+    public int Rating { get; set; }
+
     public virtual ICollection<CategoryBook> CategoryBooks { get; set; } = new List<CategoryBook>();
 
-    public virtual Review? Review { get; set; }
+    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+    public virtual ICollection<UserBookedBook> UserBookedBooks { get; set; } = new List<UserBookedBook>();
 }

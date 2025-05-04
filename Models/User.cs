@@ -37,5 +37,9 @@ public partial class User
 
     public double? LockedTime { get; set; }
 
+    public int? BookedBooks { get; set; }
+
     public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+    public virtual ICollection<UserBookedBook> UserBookedBooks { get; set; } = new List<UserBookedBook>();
 }

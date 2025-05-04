@@ -1,3 +1,4 @@
+using backend.features.book.dtos;
 using backend.features.category.dtos;
 using backend.Models;
 using backend.utils;
@@ -10,8 +11,8 @@ public interface ICategoryService
     public Task<Res<Category>> CreateCategory(CreateCategoryDto createCategoryDto);
     public Task<Res<Category>> UpdateCategory(string Id, UpdateCategoryDto updateCategoryDto);
     public Task<Res<Category>> DeleteCategory(string Id);
-    public Task<Res<Category>> GetCategoryById(string Id);
-    public Task<Res<List<Category>>> GetAllCategories();
+    public Task<Res<GetCategoryDto>> GetCategoryById(string Id);
+    public Task<Res<List<GetCategoryDto>>> GetAllCategories();
 }
 
 public class CategoryService : ICategoryService
@@ -185,15 +186,35 @@ public class CategoryService : ICategoryService
         }
     }
 
-    public async Task<Res<Category>> GetCategoryById(string Id)
+    public async Task<Res<GetCategoryDto>> GetCategoryById(string Id)
     {
         try
         {
             var Category =
-                await _context.Categories.FirstOrDefaultAsync((c) => c.Id == Id)
+                await _context
+                    .Categories.Include(c => c.CategoryBooks)
+                    .ThenInclude(cb => cb.Book)
+                    .Select(category => new GetCategoryDto
+                    {
+                        Id = category.Id,
+                        Name = category.Name,
+                        Description = category.Description,
+                        CreatedAt = category.CreatedAt,
+                        Books = category
+                            .CategoryBooks.Select(cb => new BookDto
+                            {
+                                Id = cb.Book.Id,
+                                Title = cb.Book.Title,
+                                BookPictureUrl = cb.Book.BookPictureUrl,
+                                AvailableCopies = cb.Book.AvailableCopies,
+                                Author = cb.Book.Author,
+                            })
+                            .ToList(),
+                    })
+                    .FirstOrDefaultAsync((c) => c.Id == Id)
                 ?? throw new KeyNotFoundException("Category not found");
 
-            return new Res<Category>(200, "Category updated successfully", Category);
+            return new Res<GetCategoryDto>(200, "Category updated successfully", Category);
         }
         catch (Exception ex) when (ex is KeyNotFoundException || ex is BadHttpRequestException)
         {
@@ -205,15 +226,40 @@ public class CategoryService : ICategoryService
         }
     }
 
-    public async Task<Res<List<Category>>> GetAllCategories()
+    public async Task<Res<List<GetCategoryDto>>> GetAllCategories()
     {
         try
         {
-            var Categories = await _context
-                .Categories.Include((cb) => cb.CategoryBooks)
+            var categories = await _context
+                .Categories.Include(c => c.CategoryBooks)
+                .ThenInclude(cb => cb.Book)
                 .ToListAsync();
 
-            return new Res<List<Category>>(200, "Categories retrieved successfully", Categories);
+            var categoryDtos = categories
+                .Select(category => new GetCategoryDto
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Description = category.Description,
+                    CreatedAt = category.CreatedAt,
+                    Books = category
+                        .CategoryBooks.Select(cb => new BookDto
+                        {
+                            Id = cb.Book.Id,
+                            Title = cb.Book.Title,
+                            BookPictureUrl = cb.Book.BookPictureUrl,
+                            AvailableCopies = cb.Book.AvailableCopies,
+                            Author = cb.Book.Author,
+                        })
+                        .ToList(),
+                })
+                .ToList();
+
+            return new Res<List<GetCategoryDto>>(
+                200,
+                "Categories retrieved successfully",
+                categoryDtos
+            );
         }
         catch (Exception ex) when (ex is KeyNotFoundException || ex is BadHttpRequestException)
         {

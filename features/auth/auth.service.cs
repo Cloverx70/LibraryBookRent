@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using backend.features.auth.dtos;
 using backend.Models;
+using backend.utils;
 using backend.utils.email;
 using backend.utils.email.templates;
 using BCrypt.Net;
@@ -18,6 +19,8 @@ namespace backend.features.auth
         string GenerateJwtToken(string userId, DateTime expirationDate);
         Task<Res<User>> RequestResetPassword(string email);
         Task<Res<User>> VerifyResetPassword(string token, string oldPassword, string newPassword);
+        Task<Res<User>> UpdateAccount(string id, EditUserDto body);
+        Task<Res<User>> ContactUs(string email, string message);
     }
 
     public class AuthService : IAuthService
@@ -262,6 +265,55 @@ namespace backend.features.auth
                     throw new BadHttpRequestException(ex.Message);
 
                 throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<Res<User>> UpdateAccount(string id, EditUserDto body)
+        {
+            try
+            {
+                var User =
+                    await _context.Users.FirstOrDefaultAsync((u) => u.Id == id)
+                    ?? throw new KeyNotFoundException("user not found");
+
+                if (body.Email != null && body.Email != User.Email)
+                {
+                    var EmailExists = await _context.Users.FirstOrDefaultAsync(
+                        (u) => u.Email == body.Email
+                    );
+
+                    if (EmailExists is not null)
+                        throw new BadHttpRequestException("Account with same email already exists");
+                }
+
+                UtilsMethods.PatchEntity(User, body);
+
+                await _context.SaveChangesAsync();
+
+                return new Res<User>(200, "Saved changes Successfully");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<Res<User>> ContactUs(string email, string message)
+        {
+            try
+            {
+                _emailService.sendEmail(
+                    "cloverxo.yt@gmail.com",
+                    $"New Email From {email}",
+                    message,
+                    false
+                );
+
+                return new Res<User>(201, "Message Sent Successfully");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 

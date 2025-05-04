@@ -33,7 +33,6 @@ packages/
 *.nuget.targets
 
 # Configuration files
-appsettings*.json
 secrets.json
 
 # Entity Framework migrations

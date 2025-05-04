@@ -3,7 +3,9 @@ using Amazon.Extensions.NETCore.Setup;
 using Amazon.S3;
 using backend.features.auth;
 using backend.features.book;
+using backend.features.booking;
 using backend.features.category;
+using backend.features.review;
 using backend.Models;
 using backend.utils.email;
 using backend.utils.s3bucket;
@@ -50,6 +52,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 // AWS S3 configuration
 builder.Services.AddDefaultAWSOptions(builder.Configuration.GetAWSOptions());

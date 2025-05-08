@@ -1,6 +1,4 @@
 "use client";
-import { getAllBooks } from "@/app/admin/book/action";
-import BookCard, { book } from "@/app/components/bookCard";
 import BookSkeleton from "@/app/components/bookSkeleton";
 import {
   Breadcrumb,
@@ -19,19 +17,18 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight2, FilterSearch, SearchNormal1 } from "iconsax-react";
 import { motion } from "framer-motion";
-export default function AllBooksPage() {
+import { Category, GetAllCategories } from "@/app/admin/category/action";
+import { useRouter } from "next/navigation";
+export default function AllCategoriesPage() {
+  const router = useRouter();
+
   const {
-    data: Books,
+    data: Categories,
     isLoading,
     isPending,
   } = useQuery({
-    queryKey: ["BOOKS"],
-    queryFn: () =>
-      getAllBooks(
-        null,
-        { IsAvailable: true, CategoryId: null, Genre: null },
-        null
-      ),
+    queryKey: ["CATEGORIES"],
+    queryFn: () => GetAllCategories(),
   });
 
   return (
@@ -45,13 +42,13 @@ export default function AllBooksPage() {
             <ArrowRight2 size="32" color="#262626" />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/books">Books</BreadcrumbLink>
+            <BreadcrumbLink href="/books">Categories</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="text-neutral-900 font-semibold text-3xl flex justify-between items-center">
-        <h1>Books</h1>
+        <h1>Categories</h1>
       </div>
 
       <div className="w-full flex flex-col gap-3">
@@ -69,7 +66,7 @@ export default function AllBooksPage() {
 
             <input
               type="text"
-              placeholder="Search for a book"
+              placeholder="Search for a category"
               className="h-[35px] w-[250px] md:w-[400px] lg:w-[400px] xl:w-[400px] 2xl:w-[400px] bg-transparent placeholder:text-sm border border-neutral-800 focus:border-neutral-900 rounded-3xl pl-16 text-sm font-normal outline-none"
             />
           </div>
@@ -96,28 +93,25 @@ export default function AllBooksPage() {
             ? Array.from({ length: 12 }).map((_, index) => (
                 <BookSkeleton key={index} />
               ))
-            : Books && Books.length > 0
-            ? Books.map((book: book) => {
+            : Categories && Categories.length > 0
+            ? Categories.map((category: Category, index) => {
                 return (
-                  <BookCard
-                    key={book.id}
-                    id={book.id}
-                    bookPictureUrl={book.bookPictureUrl}
-                    title={book.title}
-                    description=""
-                    author={book.author}
-                    isbn={book.isbn}
-                    categoryId={book.categoryId}
-                    totalCopies={book.totalCopies}
-                    availableCopies={book.availableCopies}
-                    borrowedBy={book.borrowedBy}
-                    borrowedAt={book.borrowedAt}
-                    returnDueDate={book.returnDueDate}
-                    returnedAt={book.returnedAt}
-                    createdAt={book.createdAt}
-                    updatedAt={book.updatedAt}
-                    genre={book.genre}
-                  />
+                  <div
+                    key={category.id || index}
+                    onClick={() => router.push(`/category/${category.id}`)}
+                    className=" w-44 h-40 p-4 cursor-pointer text-neutral-800 bg-transparent border border-dashed border-neutral-800 flex flex-col items-center justify-center gap-2  "
+                  >
+                    <div className=" w-full flex flex-col items-center justify-center ">
+                      <h1 className=" font-bold ">{category.name}</h1>
+                      <p className=" line-clamp-2 text-center text-xs">
+                        {category.description}
+                      </p>
+                    </div>
+                    <p className=" text-xs">
+                      {category.books.length >= 0 && category.books.length}{" "}
+                      Books
+                    </p>
+                  </div>
                 );
               })
             : ""}

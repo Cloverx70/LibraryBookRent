@@ -31,6 +31,7 @@ export default function AdminBookPageLayout() {
 
   const [showFilters, setShowFilters] = useState(false);
   type GenreType =
+    | ""
     | "Fiction"
     | "NonFiction"
     | "Fantasy"
@@ -112,7 +113,7 @@ export default function AdminBookPageLayout() {
               onChange={(e) => setValues({ ...Values, Query: e.target.value })}
               type="text"
               placeholder="Search for a book"
-              className="h-9 w-full bg-transparent border border-neutral-800 focus:border-neutral-100 rounded-3xl pl-14 text-sm font-normal outline-none transition-all hover:border-neutral-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-9 w-full bg-transparent border border-neutral-800 focus:border-white rounded-3xl pl-14 text-sm font-normal outline-none"
             />
           </div>
 

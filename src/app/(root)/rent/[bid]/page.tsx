@@ -1,5 +1,5 @@
 "use client";
-import { getBookById } from "@/app/adminbak/book/action";
+import { getBookById } from "@/app/admin/book/action";
 import { book } from "@/app/components/bookCard";
 import {
   Breadcrumb,
@@ -25,7 +25,7 @@ export default function RentBookPage() {
 
   const router = useRouter();
 
-  const { data: BookData } = useQuery<book | undefined>({
+  const { data: BookData, isPending } = useQuery<book | undefined>({
     queryKey: ["BOOKRENTAL"],
     queryFn: () => getBookById(BookId),
     retry: 0,
@@ -44,6 +44,8 @@ export default function RentBookPage() {
       router.push("/");
     },
   });
+
+  if (!BookData && isPending) return <p>loading...</p>;
 
   return (
     <section className=" w-full min-h-screen p-4 flex flex-col gap-4">
@@ -69,7 +71,7 @@ export default function RentBookPage() {
           <div className="relative w-20 overflow-hidden">
             <Image
               unoptimized={false}
-              src={BookData?.bookPictureUrl ?? ""}
+              src={BookData!.bookPictureUrl}
               alt="pic"
               className="object-cover object-center"
               fill

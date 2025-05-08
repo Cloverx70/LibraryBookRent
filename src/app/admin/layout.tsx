@@ -1,42 +1,28 @@
 "use client";
-
 import {
   Book,
   Category,
+  Graph,
   People,
   ProfileCircle,
   Setting,
-  Tag,
 } from "iconsax-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import ProtectedRoute from "./(components)/ProtectedRoute";
 
 const AdminNavbar = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const [windowWidth, setWindowWidth] = useState(0);
   const [navState, setNavState] = useState(false);
   const [hideText, setHideText] = useState(false);
 
   useEffect(() => {
-    if (windowWidth > 700) {
+    if (window.innerWidth > 700) {
       setNavState(true);
       setHideText(false);
-    } else {
-      setNavState(false);
-      setHideText(true);
     }
-  }, [windowWidth]);
-
-  useEffect(() => {
-    const updateWidth = () => setWindowWidth(window.innerWidth);
-    updateWidth();
-
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
   const toggleNav = () => {
@@ -55,16 +41,16 @@ const AdminNavbar = () => {
       animate={{
         opacity: 1,
         x: 0,
-        width: windowWidth >= 768 ? (navState ? 150 : 65) : navState ? 150 : 65,
+        width: navState ? 120 : 50,
       }}
       transition={{ duration: 0.3, ease: "easeInOut" }}
-      className="h-screen z-50 bg-neutral-800 flex flex-col items-center justify-between gap-10 text-white py-4"
+      className={` h-screen z-50 bg-neutral-800  flex flex-col items-center justify-start gap-10 text-white `}
     >
       <div
         onClick={toggleNav}
-        className="w-full flex items-center cursor-pointer justify-center md:justify-start pl-0 md:pl-3 py-3 hover:bg-neutral-900/90 transition-all ease-linear duration-150 gap-2 font-normal text-sm"
+        className="w-full flex items-center cursor-pointer justify-start pl-3 py-3 hover:bg-neutral-900/90 transition-all ease-linear duration-150 gap-2 font-normal text-sm"
       >
-        <Setting size="24" color="#FFFFFF" />
+        <Setting size="20" color="#FFFFFF" />
         <motion.p
           initial={{ opacity: 0, x: -25 }}
           animate={{
@@ -72,17 +58,28 @@ const AdminNavbar = () => {
             x: hideText && navState ? -25 : 0,
           }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="text-sm font-semibold hidden md:block"
+          className={`${!navState ? "hidden" : "block"} text-xs`} // Ensures consistency in SSR
         >
           Settings
         </motion.p>
       </div>
-      <div className="w-full flex flex-col items-center gap-1 mt-5">
+      <div className="w-full flex flex-col justify-between items-center">
         {[
           {
             icon: (
+              <Graph
+                size="20"
+                color="#FFFFFF"
+                variant={pathname === "/admin/statistics" ? "Bold" : undefined}
+              />
+            ),
+            label: "Statistics",
+            link: "/admin/statistics",
+          },
+          {
+            icon: (
               <Book
-                size="24"
+                size="20"
                 color="#FFFFFF"
                 variant={pathname === "/admin/book" ? "Bold" : undefined}
               />
@@ -93,7 +90,7 @@ const AdminNavbar = () => {
           {
             icon: (
               <Category
-                size="24"
+                size="20"
                 color="#FFFFFF"
                 variant={pathname === "/admin/category" ? "Bold" : undefined}
               />
@@ -103,19 +100,8 @@ const AdminNavbar = () => {
           },
           {
             icon: (
-              <Tag
-                size="24"
-                color="#FFFFFF"
-                variant={pathname === "/admin/rentals" ? "Bold" : undefined}
-              />
-            ),
-            label: "Rentals",
-            link: "/admin/rentals",
-          },
-          {
-            icon: (
               <People
-                size="24"
+                size="20"
                 color="#FFFFFF"
                 variant={pathname === "/admin/user" ? "Bold" : undefined}
               />
@@ -132,7 +118,7 @@ const AdminNavbar = () => {
                 router.push(link);
               } else router.push(link);
             }}
-            className="w-full h-auto justify-center md:justify-start pl-0 md:pl-3 py-3 cursor-pointer hover:bg-neutral-900/90 transition-all ease-linear duration-150 flex items-center gap-2 "
+            className="w-full h-auto justify-start pl-3 py-3 cursor-pointer hover:bg-neutral-900/90 transition-all ease-linear duration-150 flex items-center gap-2 "
           >
             {icon}
             <motion.p
@@ -143,24 +129,24 @@ const AdminNavbar = () => {
               }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="text-sm font-semibold hidden md:block"
+              className=" text-xs"
             >
-              {label}
+              {navState && label}
             </motion.p>
           </div>
         ))}
       </div>
       <div className="flex-grow" />
       <div
-        onClick={() => router.push("/admin/profile")}
-        className="w-full h-auto cursor-pointer hover:bg-neutral-900/90 transition-all ease-linear duration-150 pl-0 md:pl-3 py-3 flex items-center justify-center md:justify-start gap-2"
+        onClick={() => router.push("/profile")}
+        className="w-full h-auto cursor-pointer hover:bg-neutral-900/90 transition-all ease-linear duration-150 pl-3 py-3 flex items-center justify-start gap-2"
       >
-        <ProfileCircle size="24" color="#FFFFFF" />
+        <ProfileCircle size="20" color="#FFFFFF" />
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: hideText ? 0 : 1 }}
           transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="text-sm font-semibold hidden md:block"
+          className=" text-xs"
         >
           {navState && "Profile"}
         </motion.p>
@@ -173,11 +159,9 @@ export default function AdminPageLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <ProtectedRoute>
-      <div className=" flex bg-neutral-900">
-        <AdminNavbar />
-        {children}
-      </div>
-    </ProtectedRoute>
+    <div className=" flex bg-neutral-900">
+      <AdminNavbar />
+      {children}
+    </div>
   );
 }

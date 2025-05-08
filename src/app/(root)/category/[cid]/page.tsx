@@ -1,5 +1,4 @@
 "use client";
-import { getAllBooks } from "@/app/admin/book/action";
 import BookCard, { book } from "@/app/components/bookCard";
 import BookSkeleton from "@/app/components/bookSkeleton";
 import {
@@ -19,19 +18,19 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight2, FilterSearch, SearchNormal1 } from "iconsax-react";
 import { motion } from "framer-motion";
-export default function AllBooksPage() {
+import { useParams } from "next/navigation";
+import { GetCategoryById } from "@/app/admin/category/action";
+export default function CategoryBooksPage() {
+  const { cid } = useParams();
+  const CategoryId: string = Array.isArray(cid) ? cid[0] : cid ?? "";
+
   const {
-    data: Books,
+    data: Category,
     isLoading,
     isPending,
   } = useQuery({
-    queryKey: ["BOOKS"],
-    queryFn: () =>
-      getAllBooks(
-        null,
-        { IsAvailable: true, CategoryId: null, Genre: null },
-        null
-      ),
+    queryKey: ["CATEGORYBOOKS"],
+    queryFn: () => GetCategoryById(CategoryId),
   });
 
   return (
@@ -45,13 +44,21 @@ export default function AllBooksPage() {
             <ArrowRight2 size="32" color="#262626" />
           </BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/books">Books</BreadcrumbLink>
+            <BreadcrumbLink href="/books">Categories</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator>
+            <ArrowRight2 size="32" color="#262626" />
+          </BreadcrumbSeparator>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/books">
+              {Category?.name + "'s"} Books
+            </BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="text-neutral-900 font-semibold text-3xl flex justify-between items-center">
-        <h1>Books</h1>
+        <h1>{Category?.name + "'s"} Books</h1>
       </div>
 
       <div className="w-full flex flex-col gap-3">
@@ -69,7 +76,7 @@ export default function AllBooksPage() {
 
             <input
               type="text"
-              placeholder="Search for a book"
+              placeholder={`Search in ${Category?.name}'s`}
               className="h-[35px] w-[250px] md:w-[400px] lg:w-[400px] xl:w-[400px] 2xl:w-[400px] bg-transparent placeholder:text-sm border border-neutral-800 focus:border-neutral-900 rounded-3xl pl-16 text-sm font-normal outline-none"
             />
           </div>
@@ -96,8 +103,8 @@ export default function AllBooksPage() {
             ? Array.from({ length: 12 }).map((_, index) => (
                 <BookSkeleton key={index} />
               ))
-            : Books && Books.length > 0
-            ? Books.map((book: book) => {
+            : Category?.books && Category.books.length > 0
+            ? Category.books.map((book: book) => {
                 return (
                   <BookCard
                     key={book.id}

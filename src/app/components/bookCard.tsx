@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import React from "react";
 
 export interface book {
@@ -27,8 +28,14 @@ const BookCard: React.FC<book> = ({
   availableCopies,
   bookPictureUrl,
 }) => {
+  const router = useRouter();
+
   return (
-    <div key={id} className=" w-52 h-[260px] flex flex-col gap-2">
+    <div
+      key={id}
+      onClick={() => router.push(`/books/${id}`)}
+      className=" w-52 h-[260px] flex flex-col gap-2 cursor-pointer"
+    >
       <div className="relative w-[90%] h-[90%]">
         <Image
           src={bookPictureUrl}

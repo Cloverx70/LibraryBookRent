@@ -341,22 +341,31 @@ export default function ProfilePage() {
           Declined Rentals
         </button>
       </div>
-      <div className=" w-full max-h-[35%] overflow-y-auto bg-white flex flex-col  p-1 gap-1">
-        {UserBooksState.Pending && (
-          <PendingRentalsDisplay
-            PendingRentals={statusData?.pendingRentals || []}
-          />
-        )}
-        {UserBooksState.Approved && (
-          <ApprovedRentalsDisplay
-            ApprovedRentals={statusData?.approvedRentals || []}
-          />
-        )}
-        {UserBooksState.Declined && (
-          <DeclinedRentalsDisplay
-            DeclinedRentals={statusData?.declinedRentals || []}
-          />
-        )}
+      <div className="w-full max-h-[35%] overflow-y-auto bg-white flex flex-col p-1 gap-1">
+        {UserBooksState.Pending &&
+          (statusData && statusData?.pendingRentals?.length > 0 ? (
+            <PendingRentalsDisplay PendingRentals={statusData.pendingRentals} />
+          ) : (
+            <p className="text-center mt-5 ">No pending rentals yet..</p>
+          ))}
+
+        {UserBooksState.Approved &&
+          (statusData && statusData?.approvedRentals?.length > 0 ? (
+            <ApprovedRentalsDisplay
+              ApprovedRentals={statusData.approvedRentals}
+            />
+          ) : (
+            <p className="text-center mt-5">No approved rentals yet..</p>
+          ))}
+
+        {UserBooksState.Declined &&
+          (statusData && statusData?.declinedRentals?.length > 0 ? (
+            <DeclinedRentalsDisplay
+              DeclinedRentals={statusData.declinedRentals}
+            />
+          ) : (
+            <p className="text-center mt-5">No declined rentals yet..</p>
+          ))}
       </div>
     </section>
   );

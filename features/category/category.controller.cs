@@ -28,7 +28,7 @@ namespace backend.features.category
             {
                 var response = await _categoryService.CreateCategory(createCategoryDto);
 
-                return Ok(new { message = response.Message });
+                return StatusCode(response.Code, new { message = response.Message });
             }
             catch (Exception ex)
                 when (ex is ArgumentException

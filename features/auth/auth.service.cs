@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using backend.features.auth.dtos;
+using backend.features.booking.dtos;
 using backend.Models;
 using backend.utils;
 using backend.utils.email;
@@ -21,6 +22,10 @@ namespace backend.features.auth
         Task<Res<User>> VerifyResetPassword(string token, string oldPassword, string newPassword);
         Task<Res<User>> UpdateAccount(string id, EditUserDto body);
         Task<Res<User>> ContactUs(string email, string message);
+        Task<Res<List<GetUserDto>>> GetAllUsers();
+        Task<Res<GetUserDto>> GetUserById(string id);
+        Task<Res<User>> DeleteUserById(string id);
+        Task<Res<User>> LockUserAccount(string id);
     }
 
     public class AuthService : IAuthService
@@ -310,6 +315,145 @@ namespace backend.features.auth
                 );
 
                 return new Res<User>(201, "Message Sent Successfully");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<Res<List<GetUserDto>>> GetAllUsers()
+        {
+            try
+            {
+                var Users = await _context
+                    .Users.Select(u => new GetUserDto
+                    {
+                        Id = u.Id,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        Email = u.Email,
+                        PhoneNumber = u.PhoneNumber,
+                        Address = u.Address,
+                        Username = u.Username,
+                        StudentMajor = u.StudentMajor,
+                        Role = u.Role,
+                        CreatedAt = u.CreatedAt,
+                        UpdatedAt = u.UpdatedAt,
+                        PendingRentals = _context
+                            .UserBookedBooks.Where(ub =>
+                                ub.UserId == u.Id && ub.Status == RentalStatus.pending
+                            )
+                            .Select(ub => ub.Book)
+                            .ToList(),
+
+                        ApprovedRentals = _context
+                            .UserBookedBooks.Where(ub =>
+                                ub.UserId == u.Id && ub.Status == RentalStatus.approved
+                            )
+                            .Select(ub => ub.Book)
+                            .ToList(),
+
+                        DeclinedRentals = _context
+                            .UserBookedBooks.Where(ub =>
+                                ub.UserId == u.Id && ub.Status == RentalStatus.declined
+                            )
+                            .Select(ub => ub.Book)
+                            .ToList(),
+                    })
+                    .ToListAsync();
+
+                return new Res<List<GetUserDto>>(200, "Users retrieved successfully", Users);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<Res<GetUserDto>> GetUserById(string id)
+        {
+            try
+            {
+                var User = await _context
+                    .Users.Where((u) => u.Id == id)
+                    .Select(u => new GetUserDto
+                    {
+                        Id = u.Id,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName,
+                        Email = u.Email,
+                        PhoneNumber = u.PhoneNumber,
+                        Address = u.Address,
+                        Username = u.Username,
+                        StudentMajor = u.StudentMajor,
+                        Role = u.Role,
+                        CreatedAt = u.CreatedAt,
+                        UpdatedAt = u.UpdatedAt,
+                        PendingRentals = _context
+                            .UserBookedBooks.Where(ub =>
+                                ub.UserId == u.Id && ub.Status == RentalStatus.pending
+                            )
+                            .Select(ub => ub.Book)
+                            .ToList(),
+
+                        ApprovedRentals = _context
+                            .UserBookedBooks.Where(ub =>
+                                ub.UserId == u.Id && ub.Status == RentalStatus.approved
+                            )
+                            .Select(ub => ub.Book)
+                            .ToList(),
+
+                        DeclinedRentals = _context
+                            .UserBookedBooks.Where(ub =>
+                                ub.UserId == u.Id && ub.Status == RentalStatus.declined
+                            )
+                            .Select(ub => ub.Book)
+                            .ToList(),
+                    })
+                    .FirstOrDefaultAsync();
+
+                return new Res<GetUserDto>(200, "User retrieved successfully", User);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<Res<User>> DeleteUserById(string id)
+        {
+            try
+            {
+                var User =
+                    await _context.Users.FirstOrDefaultAsync((u) => u.Id == id)
+                    ?? throw new KeyNotFoundException("user not found");
+
+                _context.Users.Remove(User);
+
+                await _context.SaveChangesAsync();
+
+                return new Res<User>(200, "user deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public async Task<Res<User>> LockUserAccount(string id)
+        {
+            try
+            {
+                var User =
+                    await _context.Users.FirstOrDefaultAsync((u) => u.Id == id)
+                    ?? throw new KeyNotFoundException("user not found");
+
+                User.IsAccountLocked = true;
+
+                await _context.SaveChangesAsync();
+
+                return new Res<User>(200, "user locked successfully");
             }
             catch (Exception ex)
             {

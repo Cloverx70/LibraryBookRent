@@ -37,29 +37,21 @@ public class BookingController : ControllerBase
         }
     }
 
-    [HttpPost("approve")]
+    [HttpPut("approve/{rid}")]
     [JwtGuard, AdminGuard]
-    public async Task<IActionResult> ApproveRental([FromBody] BookABookDto dto)
+    public async Task<IActionResult> ApproveRental([FromRoute] string rid)
     {
-        var result = await _bookingService.ApproveRental(dto);
+        var result = await _bookingService.ApproveRental(rid);
         return StatusCode(result.Code, result);
     }
 
-    [HttpPost("decline")]
+    [HttpPut("decline/{rid}")]
     [JwtGuard, AdminGuard]
-    public async Task<IActionResult> DeclineRental([FromBody] BookABookDto dto)
-    {
-        var result = await _bookingService.DeclineRental(dto);
-        return StatusCode(result.Code, result);
-    }
-
-    [HttpPost("return")]
-    [JwtGuard, AdminGuard]
-    public async Task<IActionResult> ReturnABook([FromBody] ReturnABookDto body)
+    public async Task<IActionResult> DeclineRental([FromRoute] string rid)
     {
         try
         {
-            var result = await _bookingService.ReturnABook(body);
+            var result = await _bookingService.DeclineRental(rid);
             return StatusCode(result.Code, result);
         }
         catch (KeyNotFoundException ex)
@@ -74,5 +66,50 @@ public class BookingController : ControllerBase
         {
             return StatusCode(500, new Res<string>(500, "An error occurred: " + ex.Message));
         }
+    }
+
+    [HttpPut("return/{rid}")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> ReturnABook([FromRoute] string rid)
+    {
+        try
+        {
+            var result = await _bookingService.ReturnABook(rid);
+            return StatusCode(result.Code, result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new Res<string>(404, ex.Message));
+        }
+        catch (BadHttpRequestException ex)
+        {
+            return BadRequest(new Res<string>(400, ex.Message));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new Res<string>(500, "An error occurred: " + ex.Message));
+        }
+    }
+
+    [HttpGet("get-all")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> GetAllRentals([FromQuery] string? query)
+    {
+        var result = await _bookingService.GetAllRentals(query);
+        return StatusCode(
+            result.Code,
+            new { message = "Retrieved rentals successfully", data = result.Data }
+        );
+    }
+
+    [HttpGet("get/{id}")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> GetRentalById([FromRoute] string? id)
+    {
+        var result = await _bookingService.GetRentalById(id);
+        return StatusCode(
+            result.Code,
+            new { message = "Retrieved rentals successfully", data = result.Data }
+        );
     }
 }

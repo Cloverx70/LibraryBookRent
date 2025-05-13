@@ -260,7 +260,7 @@ public partial class ApplicationDbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("password_hash");
             entity.Property(e => e.PhoneNumber)
-                .HasMaxLength(20)
+                .HasMaxLength(8)
                 .HasDefaultValueSql("'NULL'")
                 .HasColumnName("phone_number");
             entity.Property(e => e.Role)

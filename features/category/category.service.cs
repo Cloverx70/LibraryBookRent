@@ -69,6 +69,18 @@ public class CategoryService : ICategoryService
 
                 var newBookIds = validBookIds.Except(existingBookIds).ToList();
 
+                foreach (var validId in newBookIds)
+                {
+                    var Book = await _context.Books.FirstOrDefaultAsync((b) => b.Id == validId);
+
+                    if (Book!.CategoryId is not null)
+                        throw new BadHttpRequestException(
+                            $"Book {Book.Title} is already existing in another category"
+                        );
+
+                    Book!.CategoryId = newCategory.Id;
+                }
+
                 var categoryBooks = newBookIds
                     .Select(id => new CategoryBook
                     {
@@ -112,6 +124,15 @@ public class CategoryService : ICategoryService
                 var ToDeleteBookIds = CategoryBookIds
                     .Where(id => !body.KeptBookIds.Contains(id))
                     .ToList();
+
+                foreach (var id in ToDeleteBookIds)
+                {
+                    var book =
+                        await _context.Books.FirstOrDefaultAsync((b) => b.Id == id)
+                        ?? throw new KeyNotFoundException("book not found");
+
+                    book.CategoryId = null;
+                }
 
                 var booksToDelete = await _context
                     .CategoryBooks.Where(cb =>
@@ -169,6 +190,14 @@ public class CategoryService : ICategoryService
                 .CategoryBooks.Where((cb) => cb.CategoryId == Category.Id)
                 .ToListAsync();
 
+            foreach (var book in CategoryBooks)
+            {
+                var Book =
+                    await _context.Books.FirstOrDefaultAsync((b) => b.Id == book.Id)
+                    ?? throw new KeyNotFoundException("Book not found");
+
+                Book.CategoryId = null;
+            }
             _context.Categories.Remove(Category);
             _context.CategoryBooks.RemoveRange(CategoryBooks);
 

@@ -3,13 +3,6 @@ using System.Collections.Generic;
 
 namespace backend.Models;
 
-public enum RentalStatus
-{
-    pending,
-    approved,
-    declined,
-}
-
 public partial class UserBookedBook
 {
     public string Id { get; set; } = null!;
@@ -24,7 +17,7 @@ public partial class UserBookedBook
 
     public DateTime? ReturnedAt { get; set; }
 
-    public RentalStatus? Status { get; set; }
+    public string? Status { get; set; }
 
     public virtual Book Book { get; set; } = null!;
 

@@ -1,4 +1,5 @@
 using backend.features.auth.dtos;
+using backend.features.booking.dtos;
 using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -138,22 +139,34 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Access granted", user });
     }
 
-    [HttpPost("update")]
+    [HttpPost("update/{id}")]
     [JwtGuard]
-    public async Task<IActionResult> UpdateAccount([FromBody] EditUserDto body)
+    public async Task<IActionResult> UpdateAccount(
+        [FromBody] EditUserDto body,
+        [FromRoute] string id
+    )
     {
         try
         {
-            var userId = HttpContext.Items["UserId"] as string;
-
-            if (userId == null)
+            if (id is null)
             {
-                return Unauthorized(new { message = "User ID not found in context" });
+                var userId = HttpContext.Items["UserId"] as string;
+
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User ID not found in context" });
+                }
+
+                var response = await _authService.UpdateAccount(userId, body);
+
+                return StatusCode(response.Code, new { message = response.Message });
             }
+            else
+            {
+                var response = await _authService.UpdateAccount(id, body);
 
-            var response = await _authService.UpdateAccount(userId, body);
-
-            return StatusCode(response.Code, new { message = response.Message });
+                return StatusCode(response.Code, new { message = response.Message });
+            }
         }
         catch (Exception ex)
         {
@@ -167,6 +180,44 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.ContactUs(dto.Email, dto.Message);
         return StatusCode(result.Code, result.Message);
+    }
+
+    [HttpGet("get-all")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> GetAllUsers()
+    {
+        try
+        {
+            var response = await _authService.GetAllUsers();
+
+            return StatusCode(
+                response.Code,
+                new { message = response.Message, data = response.Data }
+            );
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("get/{id}")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> GetUserById([FromRoute] string id)
+    {
+        try
+        {
+            var response = await _authService.GetUserById(id);
+
+            return StatusCode(
+                response.Code,
+                new { message = response.Message, data = response.Data }
+            );
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
     }
 
     // Reset Password Feature :
@@ -202,6 +253,44 @@ public class AuthController : ControllerBase
         catch (BadHttpRequestException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("delete/{id}")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> DeleteUser(string id)
+    {
+        try
+        {
+            var response = await _authService.DeleteUserById(id);
+            return StatusCode(response.Code, new { message = response.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = ex.Message });
+        }
+    }
+
+    [HttpPut("lock/{id}")]
+    [JwtGuard, AdminGuard]
+    public async Task<IActionResult> LockUser(string id)
+    {
+        try
+        {
+            var response = await _authService.LockUserAccount(id);
+            return StatusCode(response.Code, new { message = response.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
         }
         catch (Exception ex)
         {

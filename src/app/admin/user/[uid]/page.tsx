@@ -1,6 +1,5 @@
 "use client";
 import { book } from "@/app/components/bookCard";
-import { useUserContext } from "@/app/contexts/userContext";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -23,11 +22,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toaster from "@/app/components/toaster";
-import { UpdateAccount, User } from "../action";
-import { motion } from "framer-motion";
-import ProfileSkeleton from "@/app/components/ProfileSkeleton";
+import { UpdateAccount, User } from "@/app/(root)/profile/action";
+import { DeleteUserById, GetUserById, LockUserById } from "../action";
+import { useParams, useRouter } from "next/navigation";
 
 const UserSchema = z.object({
   username: z.string().nonempty("username is required"),
@@ -39,8 +38,14 @@ const UserSchema = z.object({
   studentMajor: z.string(),
 });
 
-export default function ProfilePage() {
-  const { statusData, isPending: statusPending } = useUserContext();
+export default function AdminUserViewPage() {
+  const { uid } = useParams();
+  const UserId: string = Array.isArray(uid) ? uid[0] : uid ?? "";
+
+  const { data: UserData } = useQuery({
+    queryKey: ["USERDATA"],
+    queryFn: () => GetUserById(UserId),
+  });
 
   const [UserBooksState, setUserBooksState] = useState({
     Pending: true,
@@ -51,6 +56,7 @@ export default function ProfilePage() {
   const [EditMode, setEditMode] = useState(false);
 
   const client = useQueryClient();
+  const router = useRouter();
 
   type userInputs = z.infer<typeof UserSchema>;
 
@@ -67,12 +73,40 @@ export default function ProfilePage() {
     },
   });
 
+  const { mutate: LockAccountMutate } = useMutation({
+    mutationKey: ["LOCKACCOUNT"],
+    mutationFn: () => LockUserById(UserId),
+    onSuccess: () => {
+      toaster("Success", "User have been locked successfully");
+      client.invalidateQueries({ queryKey: ["USERDATA"] });
+      client.invalidateQueries({ queryKey: ["USERS"] });
+    },
+    onError: (e) => {
+      toaster("Error locking account", e.message);
+    },
+  });
+
+  const { mutate: DeleteUserMutate } = useMutation({
+    mutationKey: ["DELETEMUTATE"],
+    mutationFn: () => DeleteUserById(UserId),
+    onSuccess: () => {
+      toaster("Success", "User have been deleted successfully");
+      client.invalidateQueries({ queryKey: ["USERS"] });
+      router.push("/admin/user");
+    },
+    onError: (e) => {
+      toaster("Error deleting account", e.message);
+    },
+  });
+
   const { mutate: SaveChanges, isPending } = useMutation({
     mutationKey: ["UPDATEUSER"],
-    mutationFn: (data: User) => UpdateAccount(data),
+    mutationFn: (data: User) => UpdateAccount(data, UserId),
     onSuccess: () => {
       toaster("Success", "Changes have been saved");
-      client.invalidateQueries({ queryKey: ["STATUS"] });
+      client.invalidateQueries({ queryKey: ["USERDATA"] });
+      client.invalidateQueries({ queryKey: ["USERS"] });
+
       setEditMode(false);
     },
     onError: (e) => {
@@ -81,28 +115,21 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (statusData) {
+    if (UserData) {
       UserForm.reset({
-        username: statusData.username,
-        firstName: statusData.firstName,
-        lastName: statusData.lastName,
-        email: statusData.email,
-        phoneNumber: statusData.phoneNumber ?? undefined,
-        address: statusData.address ?? "",
-        studentMajor: statusData.studentMajor ?? undefined,
+        username: UserData.username,
+        firstName: UserData.firstName,
+        lastName: UserData.lastName,
+        email: UserData.email,
+        phoneNumber: UserData.phoneNumber ?? undefined,
+        address: UserData.address || " ",
+        studentMajor: UserData.studentMajor ?? undefined,
       });
     }
-  }, [UserForm, statusData]);
-
-  if (statusPending) return <ProfileSkeleton />;
+  }, [UserForm, UserData]);
 
   return (
-    <motion.section
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className="w-full h-screen "
-    >
+    <section className="w-full h-screen  bg-white">
       <div className="p-5 flex flex-col gap-5">
         <Breadcrumb>
           <BreadcrumbList className="text-neutral-800 font-sans text-xs">
@@ -113,27 +140,45 @@ export default function ProfilePage() {
               <ArrowRight2 size="25" color="#262626" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbLink href={`/profile/${statusData?.id}`}>
-                Profile
-              </BreadcrumbLink>
+              <BreadcrumbLink href={`/admin/user`}>Users</BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
 
         <div className=" flex items-center justify-between">
           <h1 className="text-2xl md:text-3xl lg:text-3xl xl:text-3xl 2xl:text-3xl font-semibold ">
-            {statusData?.username + "'"}s Profile
+            {UserData?.username + "'"}s Profile
           </h1>
-
-          {!EditMode && (
+          <div className="flex gap-2">
             <Button
-              onClick={() => setEditMode(true)}
-              className=" bg-neutral-800 text-center w-32 h-8 text-xs"
+              onClick={(e) => {
+                e.preventDefault();
+                LockAccountMutate();
+              }}
+              className="bg-neutral-800 text-center w-32 h-8 text-xs"
             >
-              Edit Profile
+              Lock Account
             </Button>
-          )}
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                DeleteUserMutate();
+              }}
+              className="bg-red-950 text-center w-32 h-8 text-xs"
+            >
+              Delete Account
+            </Button>
+            {!EditMode && (
+              <Button
+                onClick={() => setEditMode(true)}
+                className=" bg-neutral-800 text-center w-32 h-8 text-xs"
+              >
+                Edit Profile
+              </Button>
+            )}
+          </div>
         </div>
+
         <div className=" w-full">
           <Form {...UserForm}>
             <form
@@ -351,31 +396,31 @@ export default function ProfilePage() {
       </div>
       <div className="w-full max-h-[35%] overflow-y-auto bg-white flex flex-col p-1 gap-1">
         {UserBooksState.Pending &&
-          (statusData && statusData?.pendingRentals?.length > 0 ? (
-            <PendingRentalsDisplay PendingRentals={statusData.pendingRentals} />
+          (UserData && UserData?.pendingRentals?.length > 0 ? (
+            <PendingRentalsDisplay PendingRentals={UserData.pendingRentals} />
           ) : (
             <p className="text-center mt-5 ">No pending rentals yet..</p>
           ))}
 
         {UserBooksState.Approved &&
-          (statusData && statusData?.approvedRentals?.length > 0 ? (
+          (UserData && UserData?.approvedRentals?.length > 0 ? (
             <ApprovedRentalsDisplay
-              ApprovedRentals={statusData.approvedRentals}
+              ApprovedRentals={UserData.approvedRentals}
             />
           ) : (
             <p className="text-center mt-5">No approved rentals yet..</p>
           ))}
 
         {UserBooksState.Declined &&
-          (statusData && statusData?.declinedRentals?.length > 0 ? (
+          (UserData && UserData?.declinedRentals?.length > 0 ? (
             <DeclinedRentalsDisplay
-              DeclinedRentals={statusData.declinedRentals}
+              DeclinedRentals={UserData.declinedRentals}
             />
           ) : (
             <p className="text-center mt-5">No declined rentals yet..</p>
           ))}
       </div>
-    </motion.section>
+    </section>
   );
 }
 

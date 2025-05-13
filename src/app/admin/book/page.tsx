@@ -194,8 +194,15 @@ export default function AdminBookPageLayout() {
           </SelectContent>
         </Select>
       </div>
-
-      <Suspense fallback={<p>Loading...</p>}>
+      <Suspense
+        fallback={
+          <div className="p-2 w-full flex flex-col gap-4">
+            {[...Array(6)].map((_, i) => (
+              <SkeletonBookCard key={i} />
+            ))}
+          </div>
+        }
+      >
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -250,3 +257,29 @@ export default function AdminBookPageLayout() {
     </section>
   );
 }
+
+export const SkeletonBookCard = () => {
+  return (
+    <div className="w-full h-28 bg-black/15 animate-pulse rounded-md flex gap-2">
+      {/* Image skeleton */}
+      <div className="w-20 h-full bg-neutral-800 rounded-l-md" />
+
+      {/* Text content skeleton */}
+      <div className="w-[60%] flex flex-col justify-between p-2">
+        <div className="flex flex-col gap-2">
+          <div className="w-1/2 h-4 bg-neutral-700 rounded" />
+          <div className="w-[280px] h-3 bg-neutral-700 rounded" />
+          <div className="w-1/3 h-3 bg-neutral-700 rounded" />
+        </div>
+        <div className="w-1/4 h-3 bg-neutral-700 rounded" />
+      </div>
+
+      <div className="flex-1" />
+
+      {/* Availability text skeleton */}
+      <div className="p-2 flex items-end">
+        <div className="w-16 h-3 bg-neutral-700 rounded" />
+      </div>
+    </div>
+  );
+};

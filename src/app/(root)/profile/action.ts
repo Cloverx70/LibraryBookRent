@@ -15,17 +15,17 @@ export interface User {
   studentMajor: string | null;
   address: string | null;
 }
-
-export async function UpdateAccount(data: User) {
+export async function UpdateAccount(data: User, id?: string) {
   try {
-    const res: AxiosResponse<Response> = await axiosInstance.post(
-      `auth/update`,
-      data,
-      { withCredentials: true }
-    );
+    const url = id ? `auth/update/${id}` : `auth/update`; // Add slash before ID if it exists
+
+    const res: AxiosResponse<Response> = await axiosInstance.post(url, data, {
+      withCredentials: true,
+    });
+
     if (res.status !== 200)
       throw new Error(
-        res.data.message || "Somthing went worng while updating the account"
+        res.data.message || "Something went wrong while updating the account"
       );
 
     return res.data || null;

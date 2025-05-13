@@ -23,7 +23,7 @@ interface statusData {
   declinedRentals: book[];
 }
 
-interface Response {
+export interface Response {
   message: string;
   user: statusData;
 }
@@ -31,6 +31,7 @@ interface Response {
 interface UserContextType {
   statusData?: statusData;
   isPending: boolean;
+  isError: boolean;
 }
 
 export async function getStatus(): Promise<statusData | undefined> {
@@ -58,6 +59,7 @@ export async function getStatus(): Promise<statusData | undefined> {
 const UserContext = createContext<UserContextType>({
   statusData: undefined,
   isPending: true,
+  isError: false,
 });
 
 interface UserProviderProps {
@@ -65,9 +67,11 @@ interface UserProviderProps {
 }
 
 export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-  const { data: statusData, isLoading: isPending } = useQuery<
-    statusData | undefined
-  >({
+  const {
+    data: statusData,
+    isLoading: isPending,
+    isError,
+  } = useQuery<statusData | undefined>({
     queryKey: ["STATUS"],
     queryFn: getStatus,
     staleTime: 60000,
@@ -76,7 +80,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   });
 
   return (
-    <UserContext.Provider value={{ statusData, isPending }}>
+    <UserContext.Provider value={{ statusData, isPending, isError }}>
       {children}
     </UserContext.Provider>
   );

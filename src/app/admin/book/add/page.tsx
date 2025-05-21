@@ -16,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowRight2 } from "iconsax-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,6 +26,16 @@ import { useState } from "react";
 import toaster from "@/app/components/toaster";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import Spinner from "@/app/components/spinner";
+import { GetAllCategories } from "../../category/action";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const BookSchema = z.object({
   Title: z
@@ -33,6 +43,7 @@ const BookSchema = z.object({
     .nonempty("Title field cannot be empty")
     .min(10, "The title should be at least 10 characters long"),
   Author: z.string().nonempty("Author field cannot be empty"),
+  Description: z.string().nonempty(),
   Isbn: z
     .string()
     .min(17, "ISBN length should be exactly 17 characters, including hyphens"),
@@ -65,12 +76,18 @@ const BookSchema = z.object({
 export default function AddBookPage() {
   const router = useRouter();
 
+  const { data: categories } = useQuery({
+    queryKey: ["CATEGORIES"],
+    queryFn: GetAllCategories,
+  });
+
   type BookFormInputs = z.infer<typeof BookSchema>;
 
   const BookForm = useForm<BookFormInputs>({
     resolver: zodResolver(BookSchema),
     defaultValues: {
       Title: "",
+      Description: "",
       Author: "",
       Isbn: "",
       File: undefined,
@@ -80,7 +97,7 @@ export default function AddBookPage() {
     },
   });
 
-  const { mutate: mutateBook } = useMutation({
+  const { mutate: mutateBook, isPending: mutatePending } = useMutation({
     mutationKey: ["CREATE"],
     mutationFn: (data: BookFormInputs) =>
       CreateBook(
@@ -90,7 +107,8 @@ export default function AddBookPage() {
         data.File,
         data.CategoryId || "",
         data.TotalCopies,
-        data.AvailableCopies
+        data.AvailableCopies,
+        data.Description
       ),
     onSuccess: () => {
       toaster("Success", "Created book successfully");
@@ -152,6 +170,7 @@ export default function AddBookPage() {
                       <FormLabel className="text-xs">Title</FormLabel>
                       <FormControl>
                         <input
+                          placeholder="ex: Demo Book #1"
                           className="w-full text-sm h-8 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
                           {...field}
                         />
@@ -168,6 +187,7 @@ export default function AddBookPage() {
                       <FormLabel className="text-xs">Author</FormLabel>
                       <FormControl>
                         <input
+                          placeholder="Type in the author"
                           className="w-full text-sm h-8 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
                           {...field}
                         />
@@ -187,6 +207,7 @@ export default function AddBookPage() {
                       <FormLabel className="text-xs">ISBN</FormLabel>
                       <FormControl>
                         <input
+                          placeholder="Write the ISBN here..."
                           className="w-full text-sm h-8 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
                           {...field}
                         />
@@ -202,10 +223,22 @@ export default function AddBookPage() {
                     <FormItem className="sm:w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
                       <FormLabel className="text-xs">Category</FormLabel>
                       <FormControl>
-                        <input
-                          className="w-full text-sm h-8 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
-                          {...field}
-                        />
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full text-sm h-8 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories?.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -259,6 +292,25 @@ export default function AddBookPage() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={BookForm.control}
+                name="Description"
+                render={({ field }) => (
+                  <FormItem className="w-full h-auto ">
+                    <FormLabel className="text-xs">Description</FormLabel>
+                    <FormControl>
+                      <textarea
+                        rows={5}
+                        placeholder="Type your description here..."
+                        className="w-full h-auto text-sm p-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={BookForm.control}
@@ -338,9 +390,10 @@ export default function AddBookPage() {
               <div className=" w-full flex items-center justify-end ">
                 <Button
                   type="submit"
+                  disabled={mutatePending}
                   className=" w-32 h-8 text-xs bg-neutral-800 hover:bg-neutral-700 "
                 >
-                  Create
+                  {mutatePending ? <Spinner /> : "Create"}
                 </Button>
               </div>
             </form>

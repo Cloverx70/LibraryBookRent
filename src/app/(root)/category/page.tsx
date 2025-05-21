@@ -102,7 +102,9 @@ export default function AllCategoriesPage() {
                     className=" w-44 h-40 p-4 cursor-pointer text-neutral-800 bg-transparent border border-dashed border-neutral-800 flex flex-col items-center justify-center gap-2  "
                   >
                     <div className=" w-full flex flex-col items-center justify-center ">
-                      <h1 className=" font-bold ">{category.name}</h1>
+                      <h1 className=" font-bold line-clamp-1 ">
+                        {category.name}
+                      </h1>
                       <p className=" line-clamp-2 text-center text-xs">
                         {category.description}
                       </p>

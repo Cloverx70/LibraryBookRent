@@ -38,12 +38,23 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import Spinner from "@/app/components/spinner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { GetAllCategories } from "../../category/action";
 
 const BookSchema = z.object({
   Title: z
     .string()
     .nonempty("Title field cannot be empty")
     .min(10, "The title should be at least 10 characters long"),
+
+  Description: z.string().nonempty("the description feild cannot be empty"),
   Author: z.string().nonempty("Author field cannot be empty"),
   Isbn: z
     .string()
@@ -100,6 +111,11 @@ export default function ViewAndEditBookPage() {
   const { bid } = useParams();
   const BookId: string = Array.isArray(bid) ? bid[0] : bid ?? "";
 
+  const { data: categories } = useQuery({
+    queryKey: ["CATEGORIES"],
+    queryFn: GetAllCategories,
+  });
+
   const { data: BookData, isLoading: isBookLoading } = useQuery<
     book | undefined
   >({
@@ -118,6 +134,7 @@ export default function ViewAndEditBookPage() {
     resolver: zodResolver(BookSchema),
     defaultValues: {
       Title: "",
+      Description: "",
       Author: "",
       Isbn: "",
       File: undefined,
@@ -136,6 +153,7 @@ export default function ViewAndEditBookPage() {
     if (BookData) {
       BookForm.reset({
         Title: BookData.title || "",
+        Description: BookData.description || "",
         Author: BookData.author || "",
         Isbn: BookData.isbn || "",
         File: undefined,
@@ -148,7 +166,7 @@ export default function ViewAndEditBookPage() {
     setImageAlreadyExists(BookForm.watch("ImageAlreadyExists"));
   }, [BookData, BookForm]);
 
-  const { mutate: mutateBook } = useMutation({
+  const { mutate: mutateBook, isPending: mutatePending } = useMutation({
     mutationKey: ["UPDATE"],
     mutationFn: (data: BookFormInputs) =>
       UpdateBook(
@@ -159,7 +177,8 @@ export default function ViewAndEditBookPage() {
         data.File,
         data.CategoryId || "",
         data.TotalCopies,
-        data.AvailableCopies
+        data.AvailableCopies,
+        data.Description
       ),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ["BOOKS"] });
@@ -295,7 +314,7 @@ export default function ViewAndEditBookPage() {
                   control={BookForm.control}
                   name="Isbn"
                   render={({ field }) => (
-                    <FormItem className="sm:w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+                    <FormItem className="sm:w-full md:w-1/2">
                       <FormLabel className="text-xs">ISBN</FormLabel>
                       <FormControl>
                         <input
@@ -307,17 +326,30 @@ export default function ViewAndEditBookPage() {
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={BookForm.control}
                   name="CategoryId"
                   render={({ field }) => (
-                    <FormItem className="sm:w-full md:w-1/2 lg:w-1/2 xl:w-1/2 2xl:w-1/2">
+                    <FormItem className="sm:w-full md:w-1/2">
                       <FormLabel className="text-xs">Category</FormLabel>
                       <FormControl>
-                        <input
-                          className="w-full h-8 px-2 text-sm outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
-                          {...field}
-                        />
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          defaultValue={field.value}
+                        >
+                          <SelectTrigger className="w-full text-sm h-8 px-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories?.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -371,6 +403,25 @@ export default function ViewAndEditBookPage() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={BookForm.control}
+                name="Description"
+                render={({ field }) => (
+                  <FormItem className="w-full h-auto ">
+                    <FormLabel className="text-xs">Description</FormLabel>
+                    <FormControl>
+                      <textarea
+                        rows={5}
+                        placeholder="Type your description here..."
+                        className="w-full h-auto text-sm p-2 outline-none rounded-lg bg-neutral-800 focus:bg-neutral-700 transition-colors ease-linear duration-300 text-white border border-dashed border-gray-500 hover:border-gray-400"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={BookForm.control}
@@ -468,9 +519,10 @@ export default function ViewAndEditBookPage() {
               <div className=" w-full flex items-center justify-end ">
                 <Button
                   type="submit"
+                  disabled={mutatePending}
                   className=" w-auto px-6 h-8 text-xs  bg-neutral-800 hover:bg-neutral-700 "
                 >
-                  Save Changes
+                  {mutatePending ? <Spinner /> : "Save Changes"}
                 </Button>
               </div>
             </form>

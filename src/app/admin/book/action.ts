@@ -37,12 +37,14 @@ export async function CreateBook(
   File: File,
   CategoryId: string,
   TotalCopies: number,
-  AvailableCopies: number
+  AvailableCopies: number,
+  Description: string
 ) {
   try {
     const formData = new FormData();
 
     formData.append("Title", Title);
+    formData.append("Description", Description);
     formData.append("Author", Author);
     formData.append("Isbn", Isbn);
     formData.append("File", File);
@@ -78,11 +80,13 @@ export async function UpdateBook(
   File: File,
   CategoryId: string,
   TotalCopies: number,
-  AvailableCopies: number
+  AvailableCopies: number,
+  Description: string
 ) {
   try {
     const formData = new FormData();
     if (Title) formData.append("Title", Title);
+    if (Description) formData.append("Description", Description);
     if (Author) formData.append("Author", Author);
     if (Isbn) formData.append("Isbn", Isbn);
     if (File) formData.append("File", File);

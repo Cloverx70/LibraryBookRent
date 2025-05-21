@@ -18,7 +18,7 @@ public class createBookDto
     )]
     public required string Isbn { get; set; } = null!;
 
-    [Required(ErrorMessage = "title is required")]
+    [Required(ErrorMessage = "Description is required")]
     [MinLength(20, ErrorMessage = "book description should be at least 20 characters")]
     public required string Description { get; set; }
 
